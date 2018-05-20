@@ -13,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("books")
+@CrossOrigin
 class BookController {
 
     private final Gson gson;
@@ -22,6 +23,7 @@ class BookController {
         this.bookService = bookService;
         this.gson = new Gson();
     }
+
 
     @GetMapping
     String findAll() {

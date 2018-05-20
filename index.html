@@ -1,0 +1,86 @@
+<html>
+<body>
+<!--<h1>echo '{"isbn":"34321","title":"Thinking in Java", "publisher":"Helion","type":"programming", "author":"Bruce Eckel"}' | http  POST https://3d21ee8d.ngrok.io/books/</h1>-->
+
+<form>
+    <input type="text" name="title" placeholder="title">
+    <input type="text" name="author" placeholder="author">
+    <input type="text" name="isbn" placeholder="isbn">
+    <input type="submit" value="Add book">
+</form>
+
+<ul>
+</ul>
+
+<script
+        src="http://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+
+<script>
+    var base = 'http://localhost:8080';
+    var ul = $('ul');
+    function getAllBooks(callback) {
+        $.getJSON({
+            url: base+"/books"
+        }).done(callback)
+            .fail(function(xhr, status, error) {
+                console.log(xhr, status, error);
+            })
+    }
+
+    function populateListByBooks(books) {
+        ul.empty();
+        console.log(books);
+        books.filter(function (book) { return book }).forEach(function (book) {
+            ul.append($('<li data-id="'+book.id+'"><h3>'+book.title+'</h3><div display="none" class="hide"></div></li>'))
+        })
+    }
+    function getBookForDiv(div) {
+        var id = div.parent().data('id');
+        $.getJSON({
+            url: base+"/books/"+id
+        }).done(function (book) {
+            div.slideDown().removeClass('hide').html("<p>Author: "+book.author+"</p><p>Isbn: "+book.isbn+"</p>")
+        })
+    }
+    function madeH3Collapsible() {
+        ul.on('click', 'h3', function () {
+            var div = $(this).next('div');
+            if(div.hasClass('hide')) {
+                getBookForDiv(div);
+                console.log("SHOW",div);
+            } else {
+                div.slideUp().addClass('hide');
+            }
+        })
+    }
+    function handleForm() {
+        $('form').on('submit', function (e) {
+            e.preventDefault();
+            var data = JSON.stringify({
+                'title': this.title.value,
+                'author': this.author.value,
+                'isbn': this.isbn.value
+            });
+            console.log(data);
+            $.post({
+                url: base + "/books",
+                data: data,
+                contentType: "application/json; charset=utf-8"
+            }).done(function () {
+                getAllBooks(populateListByBooks);
+            }).fail(function(xhr, status, error) {
+                console.log(xhr, status, error);
+            });
+            this.reset();
+        })
+    }
+    getAllBooks(populateListByBooks);
+    madeH3Collapsible();
+    handleForm();
+    console.log("ok");
+</script>
+
+</body>
+</html>
