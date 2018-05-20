@@ -1,6 +1,7 @@
 package app.book;
 
-import app.book.exception.BookCreationException;
+import app.book.exception.MissingPropertyException;
+import app.book.exception.NoBookFound;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -15,7 +16,7 @@ public class BookService {
         this.bookMap = new HashMap<>();
     }
 
-    public List<Book> findAll(){
+    public List<Book> findAll() {
         return new ArrayList<Book>(bookMap.values());
     }
 
@@ -23,12 +24,9 @@ public class BookService {
         return bookMap.get(id);
     }
 
-    public Book createBook(CreateBookDto createBookDto){
+    public Book createBook(CreateBookDto createBookDto) {
         List<String> missingProperties = checkBookCreation(createBookDto);
-
-        if(!missingProperties.isEmpty()){
-            throw new BookCreationException("missing properties " + missingProperties);
-        }
+        validateProperties(missingProperties);
 
         Book book = new Book(count.getAndIncrement(), createBookDto.getIsbn(),
                 createBookDto.getTitle(),
@@ -39,15 +37,52 @@ public class BookService {
         return book;
     }
 
-    private List<String> checkBookCreation(CreateBookDto createBookDto){
-        if (createBookDto == null){
+    private void validateProperties(List<String> missingProperties) {
+        if (!missingProperties.isEmpty()) {
+            throw new MissingPropertyException("missing properties " + missingProperties);
+        }
+    }
+
+    private List<String> checkBookCreation(CreateBookDto createBookDto) {
+        if (createBookDto == null) {
             return Arrays.asList("title", "isbn");
         }
         List<String> list = new ArrayList<>();
-        if(createBookDto.getIsbn() == null){
+        if (createBookDto.getIsbn() == null) {
             list.add("isbn");
         }
-        if(createBookDto.getTitle() == null){
+        if (createBookDto.getTitle() == null) {
+            list.add("title");
+        }
+        return list;
+    }
+
+
+    public void update(Long id, UpdateBookDto updateBookDto) {
+        List<String> missingProperties = checkBookUpdate(updateBookDto);
+        validateProperties(missingProperties);
+        Book book = find(id);
+        if (book != null) {
+            Book updatedBook = new Book(book.getId(), book.getIsbn(),
+                    updateBookDto.getTitle(),
+                    updateBookDto.getAuthor(),
+                    book.getPublisher(),
+                    book.getType());
+            bookMap.put(book.getId(), updatedBook);
+        } else {
+            throw new NoBookFound(id);
+        }
+    }
+
+    private List<String> checkBookUpdate(UpdateBookDto updateBookDto) {
+        if (updateBookDto == null) {
+            return Arrays.asList("title", "author");
+        }
+        List<String> list = new ArrayList<>();
+        if (updateBookDto.getAuthor() == null) {
+            list.add("author");
+        }
+        if (updateBookDto.getTitle() == null) {
             list.add("title");
         }
         return list;

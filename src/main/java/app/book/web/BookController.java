@@ -3,7 +3,9 @@ package app.book.web;
 import app.book.Book;
 import app.book.BookService;
 import app.book.CreateBookDto;
-import app.book.exception.BookCreationException;
+import app.book.UpdateBookDto;
+import app.book.exception.MissingPropertyException;
+import app.book.exception.NoBookFound;
 import com.google.gson.Gson;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,12 +26,29 @@ class BookController {
         this.gson = new Gson();
     }
 
+    @PutMapping("/{id}")
+    ResponseEntity update(@RequestBody String body, @PathVariable Long id) {
+        UpdateBookDto updateBookDto = gson.fromJson(body, UpdateBookDto.class);
+        try {
+            bookService.update(id, updateBookDto);
+            return ResponseEntity.ok().build();
+        } catch (NoBookFound e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+
+    }
+
+    @ExceptionHandler({MissingPropertyException.class})
+    ResponseEntity handleException(MissingPropertyException e){
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
 
     @GetMapping
-    String findAll() {
+    List<BookDto> findAll() {
         List<Book> books = bookService.findAll();
         List<BookDto> bookDtos = mapToDto(books);
-        return gson.toJson(bookDtos);
+        return bookDtos;
     }
 
     @GetMapping("/{id}")
@@ -48,7 +67,7 @@ class BookController {
         try {
             Book book = bookService.createBook(createBookDto);
             return ResponseEntity.ok(book.getId());
-        } catch (BookCreationException e) {
+        } catch (MissingPropertyException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
