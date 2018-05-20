@@ -1,5 +1,6 @@
 package app.book;
 
+import app.book.exception.BookCreationException;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -23,10 +24,12 @@ public class BookService {
     }
 
     public Book createBook(CreateBookDto createBookDto){
-        Objects.requireNonNull(createBookDto);
-        Objects.requireNonNull(createBookDto.getTitle());
-        Objects.requireNonNull(createBookDto.getIsbn());
-        //
+        List<String> missingProperties = checkBookCreation(createBookDto);
+
+        if(!missingProperties.isEmpty()){
+            throw new BookCreationException("missing properties " + missingProperties);
+        }
+
         Book book = new Book(count.getAndIncrement(), createBookDto.getIsbn(),
                 createBookDto.getTitle(),
                 createBookDto.getAuthor(),
@@ -34,6 +37,20 @@ public class BookService {
                 createBookDto.getType());
         bookMap.put(book.getId(), book);
         return book;
+    }
+
+    private List<String> checkBookCreation(CreateBookDto createBookDto){
+        if (createBookDto == null){
+            return Arrays.asList("title", "isbn");
+        }
+        List<String> list = new ArrayList<>();
+        if(createBookDto.getIsbn() == null){
+            list.add("isbn");
+        }
+        if(createBookDto.getTitle() == null){
+            list.add("title");
+        }
+        return list;
     }
 
 

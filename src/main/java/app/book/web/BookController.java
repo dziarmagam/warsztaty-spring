@@ -3,7 +3,9 @@ package app.book.web;
 import app.book.Book;
 import app.book.BookService;
 import app.book.CreateBookDto;
+import app.book.exception.BookCreationException;
 import com.google.gson.Gson;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -22,23 +24,31 @@ class BookController {
     }
 
     @GetMapping
-    String findAll(){
+    String findAll() {
         List<Book> books = bookService.findAll();
         List<BookDto> bookDtos = mapToDto(books);
         return gson.toJson(bookDtos);
     }
 
     @GetMapping("/{id}")
-    String find(@PathVariable Long id){
+    ResponseEntity find(@PathVariable Long id) {
         Book book = bookService.find(id);
-        return gson.toJson(mapToDto(book));
+        if (book != null) {
+            return ResponseEntity.ok(gson.toJson(mapToDto(book)));
+        } else {
+            return ResponseEntity.noContent().build();
+        }
     }
 
     @PostMapping
-    String create(@RequestBody String json){
+    ResponseEntity create(@RequestBody String json) {
         CreateBookDto createBookDto = gson.fromJson(json, CreateBookDto.class);
-        Book book = bookService.createBook(createBookDto);
-        return Long.toString(book.getId());
+        try {
+            Book book = bookService.createBook(createBookDto);
+            return ResponseEntity.ok(book.getId());
+        } catch (BookCreationException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     private List<BookDto> mapToDto(List<Book> books) {
