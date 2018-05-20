@@ -1,5 +1,7 @@
 package app.book;
 
+import java.util.Objects;
+
 public class Book {
     private final long id;
     private final String isbn;
@@ -8,7 +10,9 @@ public class Book {
     private final String publisher;
     private final String type;
 
-    public Book(long id, String isbn, String title, String author, String publisher, String type) {
+    Book(long id, String isbn, String title, String author, String publisher, String type) {
+        Objects.requireNonNull(isbn);
+        Objects.requireNonNull(title);
         this.id = id;
         this.isbn = isbn;
         this.title = title;

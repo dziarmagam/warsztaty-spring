@@ -34,6 +34,13 @@ class BookController {
         return gson.toJson(mapToDto(book));
     }
 
+    @PostMapping
+    String create(@RequestBody String json){
+        CreateBookDto createBookDto = gson.fromJson(json, CreateBookDto.class);
+        Book book = bookService.createBook(createBookDto);
+        return Long.toString(book.getId());
+    }
+
     private List<BookDto> mapToDto(List<Book> books) {
         List<BookDto> list = new ArrayList<>();
         for (Book book : books) {
@@ -52,13 +59,6 @@ class BookController {
         dto.setTitle(book.getTitle());
         dto.setType(book.getType());
         return dto;
-    }
-
-    @PostMapping
-    String create(@RequestBody String json){
-        CreateBookDto createBookDto = gson.fromJson(json, CreateBookDto.class);
-        Book book = bookService.createBook(createBookDto);
-        return Long.toString(book.getId());
     }
 
 }
